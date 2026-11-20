@@ -1,0 +1,29 @@
+# Agent — the CLI and its local api, containerised for local use only.
+#
+# Custody caveat, stated plainly: Oak keeps its key in the OS keychain, which
+# does not exist inside a container. A wallet created on macOS cannot be read
+# here — initialise or import a wallet inside the container (oak call
+# oak_setup ...) and treat the image as a separate, local-only identity.
+# Never ship this container to a public host with a funded wallet inside.
+
+FROM node:24-slim AS build
+RUN corepack enable
+# better-sqlite3 ships prebuilds for node24/linux-x64; toolchain is a fallback.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY . .
+RUN pnpm install --frozen-lockfile
+
+FROM node:24-slim AS runner
+ENV NODE_ENV=production \
+    CORAL_HOME=/coral
+WORKDIR /app
+RUN corepack enable
+COPY --from=build /app ./
+# Oak CLI alongside CORAL's — reads/writes its own state under HOME.
+RUN npm install -g @oakagentkit/addon
+VOLUME ["/coral"]
+EXPOSE 7331
+# Loopback inside the container; compose publishes to 127.0.0.1 on the host.
+CMD ["pnpm", "coral", "api"]

@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/.coral
+**/.env
+**/.env.*
+!**/.env.example
+*.log
+.DS_Store

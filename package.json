@@ -1,0 +1,42 @@
+{
+  "name": "coral",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CORAL \u2014 Cultivating On-chain Reasoning & Adaptive Learning. A self-evolving trading agent that grows a reef of memory, one decision at a time.",
+  "license": "MIT",
+  "author": "CORAL",
+  "homepage": "https://github.com/CoralAgent/AgentCoral",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "check": "turbo run check",
+    "coral": "pnpm --filter @coral/cli exec tsx src/index.ts",
+    "web": "pnpm --filter @coral/web dev",
+    "mcp": "pnpm --filter @coral/cli exec tsx src/index.ts serve"
+  },
+  "devDependencies": {
+    "railway": "^3.17.0",
+    "turbo": "^2.11.11",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "@tailwindcss/oxide"
+    ],
+    "ignoredBuiltDependencies": [
+      "better-sqlite3"
+    ],
+    "overrides": {
+      "@solana-program/system": "0.16.0",
+      "@solana-program/token": "0.16.1",
+      "@solana/kit": "8.6.0"
+    }
+  }
+}

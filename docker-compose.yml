@@ -1,0 +1,50 @@
+# Local-only composition: the reef lives in one named volume, the api owns
+# writes, web reads it directly. Both publish to loopback on the host —
+# nothing here is meant to face the public internet.
+#
+#   docker compose up --build
+#   → api  http://127.0.0.1:7331/api/health
+#   → web  http://127.0.0.1:3000  (/reef + /dapp hit the api/volume)
+#
+# Wallet custody note: see Dockerfile.agent — Oak's keychain does not cross
+# into the container; set the wallet up inside it if you want on-chain actions.
+
+name: coral
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    # 0.0.0.0 inside the container is required for the published port to
+    # reach it; the host publish below still keeps it on 127.0.0.1. A token
+    # is mandatory for non-loopback binds — the api refuses otherwise.
+    command: ["pnpm", "coral", "api", "--host", "0.0.0.0"]
+    environment:
+      CORAL_HOME: /coral
+      CORAL_MODE: paper
+      CORAL_API_TOKEN: coral-local
+    volumes:
+      - reef:/coral
+    ports:
+      - "127.0.0.1:7331:7331"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      # /reef reads the db file straight off the shared volume, read-only.
+      CORAL_HOME: /coral
+      NODE_ENV: production
+    volumes:
+      - reef:/coral:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  reef:

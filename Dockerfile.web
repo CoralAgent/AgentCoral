@@ -1,0 +1,21 @@
+# Web — the marketing + read-only reef surface.
+# Mirrors the Railway/Nixpacks commands exactly: install, build web, next start.
+# Node 24 matches engines (>=22) and keeps node:sqlite unflagged for /reef.
+
+FROM node:24-slim AS build
+RUN corepack enable
+WORKDIR /app
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @coral/web build
+
+FROM node:24-slim AS runner
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+WORKDIR /app
+RUN corepack enable
+COPY --from=build /app ./
+EXPOSE 3000
+# CORAL_HOME may point at a mounted reef for /reef; absent → honest empty state.
+CMD ["pnpm", "--filter", "@coral/web", "start"]

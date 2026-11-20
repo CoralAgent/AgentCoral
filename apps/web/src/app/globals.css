@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CORAL design system, ported from the supplied engraving template.
+   Cobalt ink on white. Two serif faces for display and editorial, Inter for
+   UI, JetBrains Mono for code. Every token here is used by a component.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  --color-cobalt: #1e32ca;
+  --color-cobalt-deep: #1525a8;
+  --color-cobalt-tint: #e6eafa;
+  --color-ink: #111111;
+  --color-ink-muted: #7c808e;
+  --color-ink-soft: #8e929f;
+  --color-rule: #e4e6ef;
+  --color-rule-cobalt: #c5cdf5;
+  --color-paper: #ffffff;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background-color: var(--color-paper);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background: var(--color-cobalt);
+    color: #ffffff;
+  }
+
+  /* Keyboard focus must stay visible against white. */
+  :focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-rule-cobalt);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-cobalt);
+  }
+}
+
+/* ── type faces ─────────────────────────────────────────────────────────── */
+.font-serif-display {
+  font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+}
+.font-serif-editorial {
+  font-family: "EB Garamond", "Cormorant Garamond", Georgia, serif;
+}
+.font-sans-clean {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.font-mono-code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ── the engraving treatment ─────────────────────────────────────────────
+   The supplied plates are already cobalt on white, so this filter is a
+   consistency pass, not a recolor: it clamps paper to pure white and pins
+   strokes to brand cobalt so all five plates read as one set.
+   ───────────────────────────────────────────────────────────────────────── */
+.cobalt-engraving {
+  filter: url(#cobalt-etching-filter);
+  mix-blend-mode: multiply;
+  user-select: none;
+  pointer-events: none;
+}
+
+@media print {
+  .cobalt-engraving {
+    filter: none;
+    mix-blend-mode: normal;
+  }
+}
+
+/* ── motion ─────────────────────────────────────────────────────────────
+   Two animations, both with a job: the ticker moves because it is a ticker,
+   the hero seal drifts so the eye lands on it. Nothing else loops.
+   ───────────────────────────────────────────────────────────────────────── */
+@keyframes coral-marquee {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-coral-marquee {
+  display: flex;
+  width: max-content;
+  animation: coral-marquee 42s linear infinite;
+}
+
+.animate-coral-marquee:hover,
+.animate-coral-marquee:focus-within {
+  animation-play-state: paused;
+}
+
+@keyframes gentle-drift {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-gentle-drift {
+  animation: gentle-drift 7s ease-in-out infinite;
+}
+
+/* Editorial row hover arrow nudge */
+.editorial-row:hover .row-arrow,
+.editorial-row:focus-visible .row-arrow {
+  transform: translate(3px, -3px);
+  color: var(--color-cobalt);
+}
+
+.row-arrow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cobalt-engraving {
+    filter: none;
+    mix-blend-mode: normal;
+  }
+}

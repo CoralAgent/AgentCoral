@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# coral runtime — the reef is local state, never committed
+.coral/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# env & secrets
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# test artifacts
+coverage/
+.turbo/
+
+# supplied design reference archive — kept locally, never published
+file tamplate/
+
+# published reef snapshot — intentionally committed for the public /reef page
+!apps/web/reef-snapshot/
+!apps/web/reef-snapshot/**
