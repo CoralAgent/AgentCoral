@@ -45,7 +45,7 @@ export function Header() {
 const FOOTER_LINKS = [
   { href: "/how-it-works", label: "How It Works" },
   { href: "/reef", label: "The Reef" },
-  { href: "/dapp", label: "dApp" },
+  { href: "https://github.com/CoralAgent", label: "GitHub" },
   { href: "/safety", label: "Safety" },
   { href: "/install", label: "Installation" },
 ];
@@ -114,7 +114,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/CoralAgent/AgentCoral"
+                  href="https://github.com/CoralAgent"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 hover:underline"
