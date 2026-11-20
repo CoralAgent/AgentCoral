@@ -36,7 +36,7 @@ export function CaBadge({ address }: { address: string }) {
   return (
     <div className="mt-6 inline-flex max-w-full items-stretch border border-cobalt/35 bg-white/70 backdrop-blur-[2px]">
       <span className="flex items-center border-r border-cobalt/25 px-2.5 font-mono-code text-[9px] uppercase tracking-[0.16em] text-cobalt/70">
-        CA
+        $CORAL
       </span>
 
       <span
