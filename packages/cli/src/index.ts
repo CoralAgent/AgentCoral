@@ -965,10 +965,10 @@ program
     const warmup = Number(opts.warmup);
 
     let bars;
-    let source: "robinhood-mcp" | "oak";
+    let source: "robinhood-mcp" | "chainbridge";
     if (opts.oak) {
       bars = readRecordedSeries(rt.config.home, symbol);
-      source = "oak";
+      source = "chainbridge";
       if (bars.length < warmup + 1) {
         fail(
           `only ${bars.length} recorded bar(s) for ${symbol.toUpperCase()} — ` +

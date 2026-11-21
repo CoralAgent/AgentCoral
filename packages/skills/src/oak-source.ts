@@ -33,7 +33,7 @@ export interface OakTokenSourceOptions {
 }
 
 export class OakTokenSource implements MarketDataSource {
-  readonly name = "oak";
+  readonly name = "chainbridge";
   private readonly path: string;
   private series: Series;
 
@@ -87,7 +87,7 @@ export class OakTokenSource implements MarketDataSource {
       const price = await this.livePrice(info.address);
       if (price === null || !Number.isFinite(price) || price <= 0) continue;
       const bars = this.append(info.symbol, price, now);
-      out.push(observationFromBars(info.symbol, bars, "oak", now));
+      out.push(observationFromBars(info.symbol, bars, "chainbridge", now));
     }
     return out;
   }

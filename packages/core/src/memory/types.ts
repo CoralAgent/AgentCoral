@@ -65,7 +65,7 @@ export interface Zone {
   lastSeen: string | null;
 }
 
-export type Venue = "paper" | "robinhood-mcp" | "oak";
+export type Venue = "paper" | "robinhood-mcp" | "chainbridge";
 
 export interface LedgerEntry {
   id: string;
@@ -115,7 +115,7 @@ export const Observation = z.object({
   sma20: z.number(),
   momentum20: z.number(),
   volatility: z.number(),
-  source: z.enum(["robinhood-mcp", "synthetic", "oak", "backtest"]),
+  source: z.enum(["robinhood-mcp", "synthetic", "chainbridge", "backtest"]),
   at: z.string(),
 });
 export type Observation = z.infer<typeof Observation>;
