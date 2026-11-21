@@ -232,7 +232,7 @@ export function startApi(rt: Runtime, port: number, version: string, host = "127
         case "POST /api/scan": {
           const body = await readBody(req);
           const symbols = parseSymbols(body.symbols as string | string[] | undefined);
-          if (!symbols.length) return err(res, 400, "pass symbols: [] — e.g. [\"OAK\"] or [\"AAPL\"]", origin);
+          if (!symbols.length) return err(res, 400, "pass symbols: [] — e.g. [\"AAPL\"] or [\"0x1939…\"]", origin);
           const venue = str(body.venue) ?? (symbols.some((s) => s.startsWith("0x")) ? "oak" : "equity");
           const source = venue === "oak" ? rt.tokenSource : rt.source;
           const report = await rt.engine.scan(symbols, source);

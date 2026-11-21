@@ -28,7 +28,7 @@ import {
   encodeFunctionData,
   type Address,
 } from "viem";
-import { OAK_ADDRESS, robinhoodChain, USDG_ADDRESS } from "@/lib/robinhood-chain";
+import { CORAL_ADDRESS, robinhoodChain, USDG_ADDRESS } from "@/lib/robinhood-chain";
 
 const APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
 const CHAIN_HEX = `0x${robinhoodChain.id.toString(16)}`;
@@ -42,7 +42,7 @@ const ERC20 = parseAbi([
 const TOKENS = [
   { symbol: "ETH", address: null as Address | null, decimals: 18 },
   { symbol: "USDG", address: USDG_ADDRESS as Address, decimals: 6 },
-  { symbol: "OAK", address: OAK_ADDRESS as Address, decimals: 18 },
+  { symbol: "CORAL", address: CORAL_ADDRESS as Address, decimals: 18 },
 ];
 
 const publicClient = createPublicClient({

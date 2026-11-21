@@ -683,7 +683,7 @@ onchain
       ["route", quote.provider ?? "unknown"],
       ["out", quote.output?.humanAmount ?? "n/a"],
       ["min out", quote.minimumOutput?.humanAmount ?? "n/a"],
-      ["oak fee", quote.oakFeeBps !== undefined ? `${quote.oakFeeBps} bps` : "n/a"],
+      ["chainbridge fee", quote.oakFeeBps !== undefined ? `${quote.oakFeeBps} bps` : "n/a"],
       ["expires", quote.expiresAt ? formatDistanceToNow(new Date(Number(quote.expiresAt) * 1000), { addSuffix: true }) : "n/a"],
       ["quote id", c.dim(quote.quoteId || "none")],
     ]);
@@ -785,7 +785,7 @@ onchain
     console.log(`  2. answer the spending-limit question: ${c.bold('oak call oak_spending_limit \'{"amountUsd":"250"}\'')}`);
     console.log(`  3. register the agent identity:     ${c.bold('oak call oak_setup \'{"mode":"register"}\'')}`);
     console.log(`  4. back up the key while it is small: ${c.bold("oak backup")}`);
-    console.log(`\n  ${c.dim("Then: coral -m live onchain swap USDG OAK 1 --confirm")}\n`);
+    console.log(`\n  ${c.dim("Then: coral -m live onchain swap USDG ETH 1 --confirm")}\n`);
     rt.close();
   });
 
@@ -793,7 +793,7 @@ onchain
 
 const KNOWN_TOKENS: Record<string, { address: string; decimals: number }> = {
   USDG: { address: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168", decimals: 6 },
-  OAK: { address: "0x6511c233790Ec10f7d673c64DC82C3F941D57828", decimals: 18 },
+  CORAL: { address: "0x193922b3ce4f5377a71e933ea2b94439f69de6e8", decimals: 18 },
 };
 const STABLES = new Set(["USDG", "USDC", "USDT"]);
 
@@ -834,7 +834,7 @@ onchain
 onchain
   .command("send")
   .description("gated transfer from the signer wallet — paper by default; live needs -m live --confirm")
-  .argument("<token>", "ETH, USDG, OAK, or a 0x token address")
+  .argument("<token>", "ETH, USDG, CORAL, or a 0x token address")
   .argument("<amount>", "amount in human units")
   .argument("<to>", "recipient 0x address")
   .option("--confirm", "broadcast for real (live mode only)")
