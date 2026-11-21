@@ -19,6 +19,8 @@ import { HOSTS, ROBINHOOD, applyToHost, detect, resolveHost } from "@coral/mcp-c
 import { serveCoral } from "@coral/mcp-connectors/server";
 
 import { boot, parseSymbols } from "./runtime.js";
+import { runDaemon } from "./daemon.js";
+import { publishSnapshot } from "./publish.js";
 import { banner, c, fail, heading, keyValue, note, ok, riskBar, table, warn } from "./ui.js";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
@@ -570,73 +572,50 @@ program
   .action((opts: { git?: boolean }) => {
     const rt = boot();
     banner();
-
-    // Locate apps/web relative to the repo root (cli lives in packages/cli).
-    let root = process.cwd();
-    for (let i = 0; i < 5 && !existsSync(join(root, "apps", "web", "package.json")); i++) {
-      root = join(root, "..");
-    }
-    if (!existsSync(join(root, "apps", "web", "package.json"))) {
-      fail("cannot find apps/web — run from inside the CORAL repo");
-      rt.close();
-      process.exit(1);
-    }
-    const snapDir = join(root, "apps", "web", "reef-snapshot");
-    mkdirSync(snapDir, { recursive: true });
-
-    const home = rt.config.home;
-    const dbIn = join(home, "reef.db");
-    if (!existsSync(dbIn)) {
-      fail(`no reef at ${dbIn} — run coral init first`);
+    let pub;
+    try {
+      pub = publishSnapshot(rt, { git: opts.git });
+    } catch (e) {
+      fail(e instanceof Error ? e.message : String(e));
       rt.close();
       process.exit(1);
     }
 
-    // VACUUM INTO gives a consistent, compacted copy even with WAL journals —
-    // but it refuses to overwrite, so the previous snapshot goes first.
-    const dbOut = join(snapDir, "reef.db");
-    if (existsSync(dbOut)) rmSync(dbOut);
-    const src = new DatabaseSync(dbIn);
-    src.exec(`VACUUM INTO '${dbOut.replace(/'/g, "''")}'`);
-    src.close();
-
-    const seriesIn = join(home, "token-series.json");
-    if (existsSync(seriesIn)) copyFileSync(seriesIn, join(snapDir, "token-series.json"));
-
-    const snap = rt.memory.snapshot();
-    writeFileSync(
-      join(snapDir, "published.json"),
-      JSON.stringify(
-        {
-          publishedAt: new Date().toISOString(),
-          polyps: snap.polyps,
-          generation: snap.generation,
-          mode: rt.config.mode,
-        },
-        null,
-        2,
-      ),
-    );
-
-    ok(`snapshot → ${snapDir}`);
+    ok(`snapshot → ${pub.snapDir}`);
     keyValue([
-      ["reef.db", `${(statSync(dbOut).size / 1024).toFixed(1)} KB`],
-      ["polyps", snap.polyps],
-      ["generation", snap.generation],
-      ["token series", existsSync(seriesIn) ? "included" : "none"],
+      ["reef.db", `${pub.dbKb.toFixed(1)} KB`],
+      ["polyps", pub.polyps],
+      ["generation", pub.generation],
+      ["token series", pub.tokenSeries ? "included" : "none"],
     ]);
     warn("this snapshot makes your trading history public once it reaches the deployed site.");
 
-    if (opts.git) {
-      console.log();
-      execFileSync("git", ["add", "apps/web/reef-snapshot"], { cwd: root, stdio: "inherit" });
-      execFileSync("git", ["commit", "-m", "Publish a reef snapshot for the public site"], { cwd: root, stdio: "inherit" });
-      execFileSync("git", ["push"], { cwd: root, stdio: "inherit" });
+    if (pub.pushed) {
       ok("pushed — Railway will redeploy with the snapshot in ~2-3 min");
-    } else {
+    } else if (!opts.git) {
       console.log(`\n  ${c.dim("publish to the live site: coral publish --git")}\n`);
     }
     rt.close();
+  });
+
+// ── daemon ────────────────────────────────────────────────────────────────
+
+program
+  .command("daemon")
+  .description("run the reef on a schedule: scan → settle → evolve → publish, no human trigger (paper-only, by design)")
+  .option("--once", "run a single pass and exit (cron/CI friendly)")
+  .option("--status-port <port>", "serve daemon status on 127.0.0.1 (default 7332)", "7332")
+  .option("--quiet", "log passes only")
+  .action(async (opts: { once?: boolean; statusPort: string; quiet?: boolean }) => {
+    banner();
+    console.log(
+      `  ${c.teal(c.bold("DAEMON"))}  ·  paper-only  ·  watchlist from .coral/daemon.json\n`,
+    );
+    await runDaemon({
+      once: opts.once,
+      statusPort: Number(opts.statusPort) || 7332,
+      quiet: opts.quiet,
+    });
   });
 
 // ── onchain ───────────────────────────────────────────────────────────────
