@@ -32,13 +32,14 @@ Shipped and verifiable today:
 
 The honest gaps:
 
-- The reef only grows when a human types a command. There is no scheduler.
-- Equity market data is synthetic until the Robinhood Trading MCP token is
-  supplied; on-chain quotes are real, equity bars are not.
+- Broker-priced equity data is not flowing yet — the Robinhood Trading MCP
+  token is the operator's OAuth to supply. Until then the reef reads real
+  Yahoo daily bars; synthetic series remain only as a clearly-labelled
+  per-symbol fallback.
 - The live swap path is wired but has never executed — the operator wallet is
   unfunded and unregistered.
 - The reef is young (generation 1). The memory is real; the track record is
-  not yet long enough to mean anything.
+  not yet long enough to mean anything — the evidence page says so itself.
 
 ## Phase 1 — Autonomy — shipped
 
@@ -69,16 +70,25 @@ a fact anyone can watch happen.
   (AAPL/MSFT/NVDA) in one structured call, so zones accumulate evidence per
   pass and cross-symbol patterns land in the same reef.
 
-## Phase 3 — Evidence
+## Phase 3 — Evidence — shipped
 
-- A track record page computed from the reef — hit rate, edge per zone,
-  drawdown — derived from settled outcomes, never asserted by copy.
-- Deeper replay — order-flow level backtesting, not just daily bars.
+- The evidence page is live at `coralagent.xyz/evidence` — hit rate, edge per
+  zone, drawdown, and confidence calibration, all computed at build time from
+  settled polyps in the published snapshot. Zones with fewer than three
+  decided polyps render as untested; a young reef gets an honest refusal
+  instead of a percentage.
+- Deeper replay — `coral backtest --intraday` replays hourly bars; tape-level
+  order-flow replay remains open.
 - Periodic snapshot audits — published, timestamped exports that let anyone
   diff the reef's state over time.
 
-## Phase 4 — Access, and the first token utility
+## Phase 4 — Broker-priced bars, and access
 
+- Broker-priced bars shipped in code: Robinhood MCP historicals merge into
+  `broker-series.json` on every pass — deduped by bar, timestamped, never
+  silently dropped. The data starts flowing the day the operator supplies
+  the OAuth token; until then the path refuses honestly rather than
+  substituting a third-party feed.
 - A hosted read-only API for reef reads — token-gated, rate-limited, never
   exposing custody or execution.
 - Visitor scans from the dApp — budget-capped so a crowd cannot burn the
@@ -88,7 +98,16 @@ a fact anyone can watch happen.
   functional: holding it is what lets a stranger query the reef. Nothing more
   ambitious than that until the track record exists to back it.
 
-## Phase 5 — Utility that earns its complexity
+## Phase 5 — Deep absolute mode, and utility that earns its complexity
+
+The reef tends itself:
+
+- Watchlist self-selection — the reef chooses what to watch from its own
+  zone edges, not from a config file.
+- Cadence that adapts — pass frequency responds to what the market is doing,
+  not to a schedule.
+- The hard lines stay hard: paper by default, the gate in code, everything on
+  the public record.
 
 Only after Phase 3 has produced a track record long enough to mean something:
 

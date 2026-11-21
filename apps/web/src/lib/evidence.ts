@@ -59,7 +59,7 @@ export interface EvidenceData {
   error?: string;
 }
 
-const ZONE_EXCLUDED = new Set(["reflection", "settlement"]);
+const ZONE_EXCLUDED = new Set(["sanctioned", "gated", "reflection", "settlement"]);
 
 export function readEvidence(): EvidenceData {
   const { home, source } = resolveCoralHome();
