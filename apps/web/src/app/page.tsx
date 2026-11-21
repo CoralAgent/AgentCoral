@@ -314,7 +314,8 @@ $ coral backtest AAPL --range 6mo
           <div className="bg-white px-6 py-7">
             <p className="font-mono-code text-[9.5px] uppercase tracking-[0.12em] text-cobalt">shipped, verifiable</p>
             <ul className="mt-4 space-y-2.5 font-sans-clean text-[12px] font-medium leading-[1.4] text-ink">
-              <li>· six-stage LangGraph pass with scored polyp recall</li>
+              <li>· six-stage LangGraph pass with scored polyp recall, now with semantic embeddings</li>
+              <li>· real Yahoo daily OHLCV — synthetic data is a labelled fallback, not the default</li>
               <li>· Robinhood Trading MCP for equities; Chainbridge MCP for Robinhood Chain reads and gated swaps</li>
               <li>· <code className="font-mono-code text-[11px]">coral api</code> — loopback HTTP surface + the /dapp page</li>
               <li>· <code className="font-mono-code text-[11px]">coral backtest</code> — real bars through the real loop, honest refusal without history</li>
@@ -324,8 +325,8 @@ $ coral backtest AAPL --range 6mo
           <div className="bg-white px-6 py-7">
             <p className="font-mono-code text-[9.5px] uppercase tracking-[0.12em] text-ink-soft">next, honestly scoped</p>
             <ul className="mt-4 space-y-2.5 font-sans-clean text-[12px] font-medium leading-[1.4] text-ink-muted">
-              <li>· sqlite-vec recall — embeddings beside the keyword scorer</li>
-              <li>· cohort runs — several symbols judged per pass, not one</li>
+              <li>· a track record page — hit rate, edge per zone, drawdown, computed from the reef</li>
+              <li>· broker-priced bars — the Robinhood MCP path is wired, waiting on the operator's token</li>
               <li>· deeper replay — tape-level order-flow backtests, not just daily bars</li>
               <li>· published packages — coral on npm once the API settles</li>
             </ul>
