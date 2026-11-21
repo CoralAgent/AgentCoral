@@ -17,7 +17,7 @@ import { createServer, type Server } from "node:http";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { evolve, selectWatchlist, type WatchlistSelection } from "@coral/core";
+import { decideCadence, evolve, selectWatchlist, type CadenceDecision, type WatchlistSelection } from "@coral/core";
 import { boot, type Runtime } from "./runtime.js";
 import { publishSnapshot } from "./publish.js";
 import { backfillEmbeddings, geminiEmbedder } from "./embeddings.js";
@@ -31,6 +31,8 @@ export interface DaemonConfig {
   maxWatch: number;
   /** Phase 5: the reef re-derives its watchlist from its own zone edges */
   selfSelect: boolean;
+  /** Phase 5: pass frequency responds to the reef's state, not a schedule */
+  adaptiveCadence: boolean;
   /** "equity" (Robinhood data) or "oak" (on-chain quotes via Chainbridge) */
   venue: "equity" | "oak";
   /** place gated PAPER orders on each pass (scan-only when false) */
@@ -52,6 +54,7 @@ const DEFAULT_CONFIG: DaemonConfig = {
   symbols: ["AAPL", "MSFT", "NVDA"],
   maxWatch: 6,
   selfSelect: true,
+  adaptiveCadence: true,
   venue: "equity",
   trade: false,
   budget: 250,
@@ -70,6 +73,8 @@ export interface DaemonStatus {
   polyps: number;
   mode: "paper";
   lastError: string | null;
+  /** the reef's own decision about when to look again (Phase 5) */
+  lastCadence: { minutes: number; reason: string } | null;
   lastPass: {
     runId: string;
     watchlist: string[];
@@ -144,6 +149,7 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
     polyps: rt.memory.snapshot().polyps,
     mode: "paper",
     lastError: null,
+    lastCadence: null,
     lastPass: null,
   };
 
@@ -151,6 +157,9 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
     ? startStatusServer(status, opts.statusPort)
     : undefined;
   if (statusServer) log(`  status → http://127.0.0.1:${opts.statusPort}/`);
+
+  /** The reef's decision about when to look again — null before the first pass. */
+  let lastCadence: CadenceDecision | null = null;
 
   const runPass = async (): Promise<void> => {
     const source = config.venue === "oak" ? rt.tokenSource : rt.source;
@@ -205,6 +214,18 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
       const pub = publishSnapshot(rt, { git: config.publishGit, quiet: true });
       log(`  snapshot → ${pub.polyps} polyps · generation ${pub.generation}${pub.pushed ? " · pushed" : ""}`);
     }
+
+    // Phase 5: the reef decides when to look again — not a schedule.
+    lastCadence = config.adaptiveCadence
+      ? decideCadence({
+          baseMinutes: config.intervalMinutes,
+          observations: report.observations,
+          pendingAgeMs: rt.memory
+            .unsettled(50)
+            .map((p) => Date.now() - new Date(p.createdAt).getTime()),
+        })
+      : { minutes: config.intervalMinutes, reason: "fixed schedule — adaptive cadence off" };
+    log(`  next pass in ${lastCadence.minutes} min — ${lastCadence.reason}`);
   };
 
   if (created) log(`  config written → ${configPath} (symbols are now a seed — the reef picks the rest from its own edges)`);
@@ -239,14 +260,16 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
     return;
   }
 
-  const intervalMs = Math.max(1, config.intervalMinutes) * 60_000;
+  const nextIntervalMs = (): number => Math.max(1, lastCadence?.minutes ?? config.intervalMinutes) * 60_000;
   const tick = (): void => {
-    status.nextPassAt = new Date(Date.now() + intervalMs).toISOString();
+    const ms = nextIntervalMs();
+    status.lastCadence = lastCadence ? { ...lastCadence } : null;
+    status.nextPassAt = new Date(Date.now() + ms).toISOString();
     writeStatus(rt, status);
     setTimeout(async () => {
       await attemptPass();
       tick();
-    }, intervalMs);
+    }, ms);
   };
   tick();
 }

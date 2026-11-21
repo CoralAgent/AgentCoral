@@ -107,8 +107,12 @@ The reef tends itself:
   live in mature, above-neutral zones earn attention; unsettled polyps hold
   their symbol until the market grades it; the old config list survives
   only as a seed. A young reef refuses to choose and keeps its seed.
-- Cadence that adapts — pass frequency responds to what the market is doing,
-  not to a schedule.
+- Cadence that adapts — shipped: the daemon's next pass is chosen after
+  every pass, from the reef's own state. Polyps past settlement age pull
+  the wait to the floor — the reef owes the market a grade; a maturing
+  polyp is visited the minute it can be graded; an active tape halves
+  the wait; a quiet tape lengthens it. Bounded, deterministic, and
+  logged with its reason.
 - The hard lines stay hard: paper by default, the gate in code, everything on
   the public record.
 

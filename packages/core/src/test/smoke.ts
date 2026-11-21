@@ -18,6 +18,7 @@ import { SkillRouter, type Skill } from "../skills/router.js";
 import { CoralEngine, heuristicDecide, type MarketDataSource } from "../agent/engine.js";
 import { evolve } from "../agent/evolution.js";
 import { selectWatchlist } from "../agent/watchlist.js";
+import { decideCadence } from "../agent/cadence.js";
 import { resolveConfig } from "../config.js";
 import type { Observation } from "../memory/types.js";
 
@@ -410,6 +411,35 @@ test("a mature reef promotes symbols from strong zones and drops the losers", ()
   assert.equal(sel.basis, "reef");
   assert.deepEqual(sel.symbols, ["GOOD", "SPY"], "a zone that only lost must never direct attention — the seed fills the seat");
   mem.close();
+});
+
+// ── adaptive cadence (Phase 5) ─────────────────────────────────────────────
+test("a mature pending polyp pulls the next pass to the floor", () => {
+  const d = decideCadence({ baseMinutes: 60, observations: [], pendingAgeMs: [90 * 60 * 1000] });
+  assert.equal(d.minutes, 5, "the reef owes the market a grade — look now");
+  assert.match(d.reason, /settlement age/);
+});
+
+test("a maturing polyp is visited the minute it can be graded", () => {
+  const d = decideCadence({ baseMinutes: 60, observations: [], pendingAgeMs: [50 * 60 * 1000] });
+  assert.equal(d.minutes, 11, "10 minutes to the settle floor plus arrival slack");
+  assert.match(d.reason, /matures soon/);
+});
+
+test("an active tape shortens the wait, a quiet tape lengthens it", () => {
+  const active = decideCadence({ baseMinutes: 60, observations: [observation({ symbol: "NVDA", change24h: 0.07 })], pendingAgeMs: [] });
+  assert.equal(active.minutes, 30);
+  assert.match(active.reason, /NVDA moved/);
+  const quiet = decideCadence({ baseMinutes: 60, observations: [observation({ symbol: "AAPL", change24h: 0.002, rsi14: 50 })], pendingAgeMs: [] });
+  assert.equal(quiet.minutes, 90);
+  assert.match(quiet.reason, /quiet tape/);
+});
+
+test("cadence never leaves its bounds", () => {
+  const floor = decideCadence({ baseMinutes: 240, minMinutes: 15, observations: [], pendingAgeMs: [2 * 60 * 60 * 1000] });
+  assert.equal(floor.minutes, 15);
+  const ceiling = decideCadence({ baseMinutes: 200, maxMinutes: 240, observations: [observation({ symbol: "X", change24h: 0.001, rsi14: 50 })], pendingAgeMs: [] });
+  assert.equal(ceiling.minutes, 240);
 });
 
 // ── report ────────────────────────────────────────────────────────────────

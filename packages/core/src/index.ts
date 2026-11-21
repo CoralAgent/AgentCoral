@@ -29,3 +29,5 @@ export { evolve } from "./agent/evolution.js";
 export type { EvolveOptions, EvolveResult } from "./agent/evolution.js";
 export { selectWatchlist } from "./agent/watchlist.js";
 export type { WatchlistOptions, WatchlistSelection } from "./agent/watchlist.js";
+export { decideCadence } from "./agent/cadence.js";
+export type { CadenceOptions, CadenceDecision } from "./agent/cadence.js";
