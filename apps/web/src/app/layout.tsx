@@ -1,34 +1,52 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, EB_Garamond, Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { CobaltFilterDefs } from "@/components/engraving";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+// Vendored woff2 files (src/fonts, downloaded once via scripts/vendor-fonts.mjs).
+// The build never touches Google Fonts — a flaky upstream must not be able to
+// take the site down.
+const inter = localFont({
+  src: [
+    { path: "../fonts/inter-400n.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/inter-500n.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/inter-600n.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "swap",
 });
 
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
+const cormorant = localFont({
+  src: [
+    { path: "../fonts/cormorant-300n.woff2", weight: "300", style: "normal" },
+    { path: "../fonts/cormorant-400n.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/cormorant-500n.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/cormorant-600n.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/cormorant-300i.woff2", weight: "300", style: "italic" },
+    { path: "../fonts/cormorant-400i.woff2", weight: "400", style: "italic" },
+    { path: "../fonts/cormorant-500i.woff2", weight: "500", style: "italic" },
+    { path: "../fonts/cormorant-600i.woff2", weight: "600", style: "italic" },
+  ],
   variable: "--font-cormorant",
   display: "swap",
 });
 
-const ebGaramond = EB_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  style: ["normal", "italic"],
+const ebGaramond = localFont({
+  src: [
+    { path: "../fonts/garamond-400n.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/garamond-500n.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/garamond-400i.woff2", weight: "400", style: "italic" },
+    { path: "../fonts/garamond-500i.woff2", weight: "500", style: "italic" },
+  ],
   variable: "--font-eb-garamond",
   display: "swap",
 });
 
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const jetbrains = localFont({
+  src: [
+    { path: "../fonts/jetbrains-400n.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/jetbrains-500n.woff2", weight: "500", style: "normal" },
+  ],
   variable: "--font-jetbrains",
   display: "swap",
 });
