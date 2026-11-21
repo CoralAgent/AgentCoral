@@ -283,14 +283,14 @@ export default function Home() {
                 verbatim output · local runs, real mainnet reads
               </p>
               <pre className="overflow-x-auto px-4 py-4 font-mono-code text-[10.5px] leading-[1.75] text-ink">
-                <code>{`$ coral onchain quote USDG OAK 5
-  route   uniswap · 0x204f…0498 · fee 25 bps
-  out     13,028.60 OAK · min 12,963.46
+                <code>{`$ coral onchain quote USDG ETH 5
+  route   uniswap · fee 25 bps
+  out     0.00307958 ETH · min 0.00306418
   note    cross-venue check passed
 
-$ coral onchain swap USDG OAK 5
+$ coral onchain swap USDG ETH 5
   gate    allowed · $5.00 of the $250 order cap
-  fill    paper · 13,002.54 OAK @ $0.000384
+  fill    paper · 0.003073 ETH @ $1623.65
   polyp   grown — onchain, momentum, paper
 
 $ coral backtest AAPL --range 6mo

@@ -241,9 +241,9 @@ balances, prices, best-route DEX quotes, swaps, lending, bridges, and agent iden
 ```bash
 npm i -g @oakagentkit/addon    # once; `oak` must be on PATH (or set OAK_MCP_COMMAND)
 pnpm coral onchain status      # wallet, identity, setup state
-pnpm coral onchain quote ETH OAK 0.01
-pnpm coral onchain swap USDG OAK 5        # paper fill through the same risk gate
-pnpm coral scan OAK --oak                 # observe the token, no order
+pnpm coral onchain quote USDG ETH 5
+pnpm coral onchain swap USDG ETH 5         # paper fill through the same risk gate
+pnpm coral scan CORAL --oak                 # observe the token, no order
 ```
 
 Reads are free. A swap is priced in USD through a quote to USDG, reviewed by the same `RiskManager`, and only signs
@@ -282,7 +282,7 @@ bearer token (mandatory for `--host` beyond loopback — e.g. inside a container
 
 ```bash
 pnpm coral backtest AAPL --range 6mo     # Yahoo daily bars (real OHLCV, no key)
-pnpm coral backtest OAK --oak            # the recorded token-series, if deep enough
+pnpm coral backtest CORAL --oak           # the recorded token-series, if deep enough
 ```
 
 The replay feeds each bar through the same `observationFromBars → recall → heuristicDecide →
