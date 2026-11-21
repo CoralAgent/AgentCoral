@@ -20,6 +20,7 @@ import { join } from "node:path";
 import { evolve } from "@coral/core";
 import { boot, type Runtime } from "./runtime.js";
 import { publishSnapshot } from "./publish.js";
+import { backfillEmbeddings, geminiEmbedder } from "./embeddings.js";
 
 export interface DaemonConfig {
   /** minutes between passes */
@@ -153,6 +154,9 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
           maxOrders: config.maxOrders,
         })
       : await rt.engine.scan(config.symbols, source);
+
+    const embedded = await backfillEmbeddings(rt.memory, geminiEmbedder);
+    if (embedded > 0) log(`  embedded ${embedded} theses — semantic recall deepened`);
 
     status.passCount += 1;
     status.lastPassAt = new Date().toISOString();

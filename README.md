@@ -66,8 +66,8 @@ A single pass is a LangGraph state graph. Six stages, one thread id, typed event
 
 | Stage | What actually happens |
 |---|---|
-| **observe** | Quotes and daily bars from the Robinhood MCP. No token → a deterministic synthetic series, clearly labelled `source: "synthetic"` all the way into the polyp. |
-| **recall** | Polyps scored by `0.50·text + 0.22·recency + 0.18·outcome + 0.10·sameSymbol + 0.05·tags`. Losses weighted as loudly as wins. |
+| **observe** | Quotes and daily bars from the Robinhood MCP when a token exists — otherwise real daily OHLCV from Yahoo (`source: "yahoo"`). A symbol that can't be fetched degrades to a deterministic synthetic series, clearly labelled `source: "synthetic"` all the way into the polyp. |
+| **recall** | Polyps scored by `0.42·text + 0.15·semantic + 0.20·recency + 0.13·outcome + 0.06·sameSymbol + 0.04·tags`. `semantic` is cosine similarity over stored Gemini embeddings — polyps without one score exactly as before, so recall degrades to pure keyword matching when no embedding key exists. Losses weighted as loudly as wins. |
 | **reason** | A model (one structured call per basket), or a deterministic heuristic when no key is set. Either way the output is Zod-validated and symbol-restricted. |
 | **gate** | The risk manager. Deterministic, exhaustive, and unarguable. Every rejection carries a reason string. |
 | **settle** | Polyps older than an hour get judged by realized price movement. A decision cannot be graded the instant it is made. |

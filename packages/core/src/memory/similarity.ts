@@ -36,6 +36,23 @@ export function textSimilarity(a: string, b: string): number {
   return shared / Math.sqrt(ta.size * tb.size);
 }
 
+/** Cosine similarity between two embedding vectors; 0 on shape mismatch. */
+export function cosine(a: number[], b: number[]): number {
+  if (a.length === 0 || a.length !== b.length) return 0;
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    dot += x * y;
+    na += x * x;
+    nb += y * y;
+  }
+  const denom = Math.sqrt(na) * Math.sqrt(nb);
+  return denom > 0 ? Math.max(0, dot / denom) : 0;
+}
+
 /** Exponential decay, half-life in days. Fresh polyps vote louder. */
 export function recency(createdAt: string, now: Date, halfLifeDays = 30): number {
   const ageMs = Math.max(0, now.getTime() - new Date(createdAt).getTime());
@@ -69,19 +86,26 @@ export interface BlendInput {
   createdAt: string;
   querySymbol?: string | null;
   queryTags?: string[];
+  /** Cosine similarity against a stored embedding — 0 when unavailable. */
+  semantic?: number;
 }
 
 export function blend(input: BlendInput, now: Date): { score: number; why: string } {
   const text = textSimilarity(input.query, input.thesis);
+  const semantic = input.semantic ?? 0;
   const fresh = recency(input.createdAt, now);
   const truth = outcomeWeight(input.outcome);
   const symbolHit = input.querySymbol && input.symbol === input.querySymbol ? 1 : 0;
   const tagHits = (input.queryTags ?? []).filter((t) => input.tags.includes(t)).length;
 
-  const score = Math.min(1, 0.5 * text + 0.22 * fresh + 0.18 * truth + 0.1 * symbolHit + 0.05 * Math.min(tagHits, 2));
+  const score = Math.min(
+    1,
+    0.42 * text + 0.15 * semantic + 0.2 * fresh + 0.13 * truth + 0.06 * symbolHit + 0.04 * Math.min(tagHits, 2),
+  );
 
   const bits: string[] = [];
   if (text > 0.05) bits.push(`text ${text.toFixed(2)}`);
+  if (semantic > 0.5) bits.push(`semantic ${semantic.toFixed(2)}`);
   if (symbolHit) bits.push("same symbol");
   if (tagHits) bits.push(`${tagHits} shared tag(s)`);
   bits.push(`${input.outcome} → ${truth.toFixed(2)}`);
