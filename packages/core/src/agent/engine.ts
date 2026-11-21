@@ -177,11 +177,15 @@ export function heuristicDecide(
 
 // ── engine ────────────────────────────────────────────────────────────────
 
+/** Optional embedding provider — recall degrades to keyword scoring without it. */
+export type Embedder = (texts: string[]) => Promise<number[][] | null>;
+
 export interface EngineDeps {
   config: CoralConfig;
   memory: CoralMemory;
   router: SkillRouter;
   risk: RiskManager;
+  embedder?: Embedder;
 }
 
 export class CoralEngine {
@@ -213,12 +217,17 @@ export class CoralEngine {
         self.emit({ type: "phase", phase: "recall", note: "pulling polyps that match today's setup" });
         const recalled: Record<string, ScoredPolyp[]> = {};
         const stats = self.deps.memory.stats();
-        for (const obs of s.observations) {
+        const queries = s.observations.map(
+          (obs) => `${obs.symbol} rsi ${obs.rsi14.toFixed(0)} momentum ${(obs.momentum20 * 100).toFixed(1)}`,
+        );
+        const queryVectors = self.deps.embedder ? await self.deps.embedder(queries) : null;
+        for (const [i, obs] of s.observations.entries()) {
           const hits = self.deps.memory.recall({
-            query: `${obs.symbol} rsi ${obs.rsi14.toFixed(0)} momentum ${(obs.momentum20 * 100).toFixed(1)}`,
+            query: queries[i]!,
             symbol: obs.symbol,
             tags: ["momentum", "mean-reversion"],
             limit: 6,
+            queryVector: queryVectors?.[i] ?? undefined,
           });
           recalled[obs.symbol] = hits;
           self.emit({
@@ -587,6 +596,20 @@ export class CoralEngine {
         },
       });
       grown.push(polyp);
+    }
+
+    // Embed new theses in one batch — semantic recall for the next pass.
+    // Embedding failure is non-fatal: keyword recall keeps working.
+    if (this.deps.embedder && grown.length > 0) {
+      this.deps.embedder(grown.map((p) => p.thesis))
+        .then((vectors) => {
+          if (!vectors) return;
+          for (const [i, polyp] of grown.entries()) {
+            const vec = vectors[i];
+            if (vec) this.deps.memory.setEmbedding(polyp.id, vec);
+          }
+        })
+        .catch(() => {});
     }
 
     if (s.settled.length > 0) {

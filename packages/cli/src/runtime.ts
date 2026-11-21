@@ -11,6 +11,7 @@ import {
   resolveConfig,
 } from "@coral/core";
 import { OakMcp, OakTokenSource, RobinhoodChain, RobinhoodMcp, allSkills, createSource, type MarketDataSource } from "@coral/skills";
+import { geminiEmbedder } from "./embeddings.js";
 
 export interface Runtime {
   config: CoralConfig;
@@ -36,7 +37,7 @@ export function boot(overrides: Partial<CoralConfig> = {}): Runtime {
   router.syncZones(memory.zones());
 
   const risk = new RiskManager(RiskManager.forMode(config.mode));
-  const engine = new CoralEngine({ config, memory, router, risk });
+  const engine = new CoralEngine({ config, memory, router, risk, embedder: geminiEmbedder });
   const source = createSource({ mcpUrl: config.robinhood.mcpUrl, mcpToken: config.robinhood.mcpToken });
   const tokenSource = new OakTokenSource({ oak: () => oak, home: config.home });
 

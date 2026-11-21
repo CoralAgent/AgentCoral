@@ -13,6 +13,7 @@ import { join } from "node:path";
 import { formatDistanceToNow } from "date-fns";
 
 import { evolve, loadEnv, type CoralEvent } from "@coral/core";
+import { backfillEmbeddings, geminiEmbedder } from "./embeddings.js";
 import { createSigner, isAddress, onchainSwap, signerBalances, toBaseUnits } from "@coral/skills";
 import type { Address } from "@coral/skills";
 import { HOSTS, ROBINHOOD, applyToHost, detect, resolveHost } from "@coral/mcp-connectors";
@@ -306,6 +307,8 @@ program
     const source = opts.oak ? rt.tokenSource : rt.source;
 
     const report = await rt.engine.scan(symbols, source, opts.json ? undefined : streamEvent);
+    const embedded = await backfillEmbeddings(rt.memory, geminiEmbedder);
+    if (embedded > 0 && !opts.json) console.log(c.dim(`  recall: embedded ${embedded} theses for semantic search`));
 
     if (opts.json) {
       console.log(JSON.stringify(report, null, 2));

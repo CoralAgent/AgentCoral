@@ -56,36 +56,7 @@ export interface BacktestResult {
 }
 
 /** Daily closes from Yahoo's public chart endpoint — real OHLCV, no key. */
-export async function fetchYahooDaily(symbol: string, range: string): Promise<Bar[]> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=1d&includePrePost=false`;
-  const res = await fetch(url, {
-    headers: { "user-agent": "Mozilla/5.0 (coral backtest; real OHLCV)" },
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!res.ok) throw new Error(`yahoo returned HTTP ${res.status} for ${symbol}`);
-  const json = (await res.json()) as {
-    chart?: {
-      result?: {
-        timestamp?: number[];
-        indicators?: { quote?: { close?: (number | null)[] }[] };
-      }[];
-      error?: { description?: string };
-    };
-  };
-  if (json.chart?.error) throw new Error(`yahoo: ${json.chart.error.description ?? "unknown error"}`);
-  const result = json.chart?.result?.[0];
-  const ts = result?.timestamp ?? [];
-  const closes = result?.indicators?.quote?.[0]?.close ?? [];
-  const bars: Bar[] = [];
-  for (let i = 0; i < ts.length; i++) {
-    const close = closes[i];
-    const t = ts[i];
-    if (typeof close === "number" && Number.isFinite(close) && close > 0 && typeof t === "number") {
-      bars.push({ t: new Date(t * 1000).toISOString(), close });
-    }
-  }
-  return bars;
-}
+export { yahooDaily as fetchYahooDaily } from "@coral/skills";
 
 /** Bars the OakTokenSource recorded from live quotes — the only real on-chain history CORAL has. */
 export function readRecordedSeries(home: string, symbol: string): Bar[] {

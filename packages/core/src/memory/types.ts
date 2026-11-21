@@ -115,7 +115,7 @@ export const Observation = z.object({
   sma20: z.number(),
   momentum20: z.number(),
   volatility: z.number(),
-  source: z.enum(["robinhood-mcp", "synthetic", "chainbridge", "backtest"]),
+  source: z.enum(["robinhood-mcp", "synthetic", "chainbridge", "backtest", "yahoo"]),
   at: z.string(),
 });
 export type Observation = z.infer<typeof Observation>;

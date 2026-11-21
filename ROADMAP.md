@@ -40,7 +40,7 @@ The honest gaps:
 - The reef is young (generation 1). The memory is real; the track record is
   not yet long enough to mean anything.
 
-## Phase 1 — Autonomy
+## Phase 1 — Autonomy — shipped
 
 The agent runs itself.
 
@@ -55,14 +55,19 @@ Why first: the core claim is *grows instead of resetting*. Until the reef
 grows without someone typing, that claim is a tagline. After this phase it is
 a fact anyone can watch happen.
 
-## Phase 2 — Real data, better memory
+## Phase 2 — Real data, better memory — partially shipped
 
-- Robinhood Trading MCP wired with a real token — equity bars and paper fills
-  priced from live quotes, ending synthetic data.
-- sqlite-vec recall — embeddings beside the keyword scorer, so "similar setup"
-  means semantically similar, not just shared words.
-- Cohort passes — several symbols judged per pass instead of one, so zones
-  accumulate evidence faster and cross-symbol patterns become visible.
+- ~~Synthetic data ends.~~ Real daily OHLCV flows in from Yahoo today
+  (`source: "yahoo"` on every observation). The Robinhood Trading MCP token
+  upgrades this to broker-priced bars and live quotes — it needs the operator's
+  OAuth, not more code.
+- ~~Embedding recall~~ — shipped as Gemini embeddings blended beside the
+  keyword scorer (`0.15·semantic` in the blend), so "similar setup" means
+  semantically similar, not just shared words. Pure-JS cosine, no native
+  dependency; polyps without an embedding score exactly as before.
+- Cohort passes — already real: each daemon pass judges the whole watchlist
+  (AAPL/MSFT/NVDA) in one structured call, so zones accumulate evidence per
+  pass and cross-symbol patterns land in the same reef.
 
 ## Phase 3 — Evidence
 

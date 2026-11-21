@@ -27,7 +27,7 @@ import {
   type ScoredPolyp,
   type Zone,
 } from "./types.js";
-import { blend } from "./similarity.js";
+import { blend, cosine } from "./similarity.js";
 
 /** Tags that describe machinery, not strategy — never scored as zones. */
 const BOOKKEEPING_TAGS = new Set(["sanctioned", "gated", "reflection", "settlement"]);
@@ -64,6 +64,11 @@ CREATE TABLE IF NOT EXISTS ledger (
   venue     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ledger_ts ON ledger(ts DESC);
+
+CREATE TABLE IF NOT EXISTS embeddings (
+  polyp_id TEXT PRIMARY KEY,
+  vector   TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS evolutions (
   id         TEXT PRIMARY KEY,
@@ -122,6 +127,12 @@ export interface RecallOptions {
   limit?: number;
   /** Restrict to polyps that already resolved — used for stats-driven prompts. */
   resolvedOnly?: boolean;
+  /**
+   * Embedding of the query text. When present, candidates that carry a stored
+   * embedding get a cosine-similarity term blended into their score; polyps
+   * without one score exactly as before.
+   */
+  queryVector?: number[];
 }
 
 export class CoralMemory {
@@ -217,8 +228,11 @@ export class CoralMemory {
       .all(Math.max(limit * 25, 200))
       .map(rowToPolyp);
 
+    const vectors = opts.queryVector ? this.embeddingMap(candidates.map((p) => p.id)) : new Map<string, number[]>();
+
     const now = new Date();
     const scored = candidates.map((polyp) => {
+      const vec = vectors.get(polyp.id);
       const { score, why } = blend(
         {
           query: opts.query,
@@ -229,6 +243,7 @@ export class CoralMemory {
           createdAt: polyp.createdAt,
           querySymbol: opts.symbol ?? null,
           queryTags: opts.tags ?? [],
+          semantic: opts.queryVector && vec ? cosine(opts.queryVector, vec) : undefined,
         },
         now,
       );
@@ -253,6 +268,43 @@ export class CoralMemory {
     const rows = this.db
       .prepare<[number], PolypRow>(
         "SELECT * FROM polyps WHERE outcome = 'pending' AND kind IN ('decision','trade') ORDER BY created_at ASC LIMIT ?",
+      )
+      .all(limit);
+    return rows.map(rowToPolyp);
+  }
+
+  // ── embeddings ──────────────────────────────────────────────────────────
+  setEmbedding(polypId: string, vector: number[]): void {
+    this.db
+      .prepare("INSERT INTO embeddings (polyp_id, vector) VALUES (?, ?) ON CONFLICT(polyp_id) DO UPDATE SET vector = excluded.vector")
+      .run(polypId, JSON.stringify(vector));
+  }
+
+  embeddingMap(ids: string[]): Map<string, number[]> {
+    const map = new Map<string, number[]>();
+    if (ids.length === 0) return map;
+    const stmt = this.db.prepare<[string], { polyp_id: string; vector: string }>(
+      "SELECT polyp_id, vector FROM embeddings WHERE polyp_id = ?",
+    );
+    for (const id of ids) {
+      const row = stmt.get(id);
+      if (!row) continue;
+      try {
+        map.set(row.polyp_id, JSON.parse(row.vector) as number[]);
+      } catch {
+        /* corrupt row — ignored, polyp scores without it */
+      }
+    }
+    return map;
+  }
+
+  /** Polyps with no stored embedding yet — backfill candidates. */
+  unembedded(limit = 20): Polyp[] {
+    const rows = this.db
+      .prepare<[number], PolypRow>(
+        `SELECT p.* FROM polyps p
+         WHERE NOT EXISTS (SELECT 1 FROM embeddings e WHERE e.polyp_id = p.id)
+         ORDER BY p.created_at DESC LIMIT ?`,
       )
       .all(limit);
     return rows.map(rowToPolyp);

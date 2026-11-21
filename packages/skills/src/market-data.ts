@@ -108,7 +108,76 @@ export class SyntheticSource implements MarketDataSource {
   }
 }
 
+/**
+ * Daily closes from Yahoo's public chart endpoint — real OHLCV, no key.
+ * Delayed daily bars, not live quotes; honest labelling matters more than
+ * freshness here, so observations carry `source: "yahoo"`.
+ */
+export async function yahooDaily(symbol: string, range: string): Promise<Bar[]> {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=1d&includePrePost=false`;
+  const res = await fetch(url, {
+    headers: { "user-agent": "Mozilla/5.0 (coral; real OHLCV)" },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) throw new Error(`yahoo returned HTTP ${res.status} for ${symbol}`);
+  const json = (await res.json()) as {
+    chart?: {
+      result?: { timestamp?: number[]; indicators?: { quote?: { close?: (number | null)[] }[] } }[];
+      error?: { description?: string };
+    };
+  };
+  if (json.chart?.error) throw new Error(`yahoo: ${json.chart.error.description ?? "unknown error"}`);
+  const result = json.chart?.result?.[0];
+  const ts = result?.timestamp ?? [];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const bars: Bar[] = [];
+  for (let i = 0; i < ts.length; i++) {
+    const close = closes[i];
+    const t = ts[i];
+    if (typeof close === "number" && Number.isFinite(close) && close > 0 && typeof t === "number") {
+      bars.push({ t: new Date(t * 1000).toISOString(), close });
+    }
+  }
+  return bars;
+}
+
+/**
+ * Real equity data without a broker token: Yahoo daily bars per symbol.
+ * A symbol that fails to fetch falls back to a clearly-labelled synthetic
+ * observation for that symbol only — the reef degrades, never fabricates.
+ */
+export class YahooSource implements MarketDataSource {
+  readonly name = "yahoo";
+  private readonly fallback = new SyntheticSource();
+
+  constructor(private readonly range = "6mo") {}
+
+  async observe(symbols: string[]): Promise<Observation[]> {
+    const out: Observation[] = [];
+    for (const symbol of symbols) {
+      try {
+        const bars = await yahooDaily(symbol, this.range);
+        if (bars.length < 30) throw new Error(`only ${bars.length} bars`);
+        out.push(observationFromBars(symbol, bars, "yahoo"));
+      } catch {
+        const degraded = await this.fallback.observe([symbol]);
+        out.push(...degraded);
+      }
+    }
+    return out;
+  }
+
+  async quote(symbol: string): Promise<number | null> {
+    try {
+      const bars = await yahooDaily(symbol, "5d");
+      return bars[bars.length - 1]?.close ?? null;
+    } catch {
+      return this.fallback.quote(symbol);
+    }
+  }
+}
+
 /** Pick the best source the environment can honestly support. */
 export function createSource(opts: SourceOptions): MarketDataSource {
-  return opts.mcpToken ? new RobinhoodMcpSource(opts) : new SyntheticSource();
+  return opts.mcpToken ? new RobinhoodMcpSource(opts) : new YahooSource();
 }

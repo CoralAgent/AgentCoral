@@ -22,7 +22,7 @@ export { SkillRouter } from "./skills/router.js";
 export type { RouteResult, Skill, SkillContext } from "./skills/router.js";
 
 export { CoralEngine, CORAL_SYSTEM_PROMPT, heuristicDecide } from "./agent/engine.js";
-export type { CoralEvent, EngineDeps, MarketDataSource, RunOptions, RunReport } from "./agent/engine.js";
+export type { CoralEvent, Embedder, EngineDeps, MarketDataSource, RunOptions, RunReport } from "./agent/engine.js";
 export { brain } from "./agent/brain.js";
 export type { Brain } from "./agent/brain.js";
 export { evolve } from "./agent/evolution.js";
