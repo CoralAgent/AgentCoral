@@ -1,0 +1,9 @@
+#!/bin/sh
+# CORAL attribution guard — strip auto-added tool attribution before it lands.
+MSG="$1"
+if grep -qiE 'Co-Authored-By:.*devin|Generated with \[Devin\]|devin-ai-integration' "$MSG"; then
+  grep -viE 'Co-Authored-By:.*devin|Generated with \[Devin\]|devin-ai-integration' "$MSG" > "$MSG.tmp" && mv "$MSG.tmp" "$MSG"
+  # trim trailing blank lines the strip may leave behind
+  printf '%s\n' "$(cat "$MSG")" > "$MSG"
+  echo "  attribution guard: stripped tool attribution from the commit message"
+fi

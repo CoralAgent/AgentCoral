@@ -1,0 +1,17 @@
+#!/bin/sh
+# CORAL identity guard — every commit in this repo ships as CoralAgent.
+# Personal identities and tool bots never land on the public record.
+CORAL_EMAIL="359191415+CoralAgent@users.noreply.github.com"
+author_email=$(git var GIT_AUTHOR_IDENT | grep -o '<[^>]*>' | tr -d '<>')
+committer_email=$(git var GIT_COMMITTER_IDENT | grep -o '<[^>]*>' | tr -d '<>')
+if [ "$author_email" != "$CORAL_EMAIL" ] || [ "$committer_email" != "$CORAL_EMAIL" ]; then
+  echo ""
+  echo "  ✗ identity guard: this repo commits as CoralAgent <$CORAL_EMAIL>"
+  echo "    current author:    $author_email"
+  echo "    current committer: $committer_email"
+  echo ""
+  echo "  fix — commit with a one-shot identity (do NOT edit git config):"
+  echo "    git -c user.name=\"CoralAgent\" -c user.email=\"$CORAL_EMAIL\" commit -m \"...\""
+  echo ""
+  exit 1
+fi
