@@ -27,3 +27,5 @@ export { brain } from "./agent/brain.js";
 export type { Brain } from "./agent/brain.js";
 export { evolve } from "./agent/evolution.js";
 export type { EvolveOptions, EvolveResult } from "./agent/evolution.js";
+export { selectWatchlist } from "./agent/watchlist.js";
+export type { WatchlistOptions, WatchlistSelection } from "./agent/watchlist.js";

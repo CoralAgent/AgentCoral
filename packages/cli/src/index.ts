@@ -612,7 +612,7 @@ program
   .action(async (opts: { once?: boolean; statusPort: string; quiet?: boolean }) => {
     banner();
     console.log(
-      `  ${c.teal(c.bold("DAEMON"))}  ·  paper-only  ·  watchlist from .coral/daemon.json\n`,
+      `  ${c.teal(c.bold("DAEMON"))}  ·  paper-only  ·  the reef chooses its own watchlist from its settled edges\n`,
     );
     await runDaemon({
       once: opts.once,

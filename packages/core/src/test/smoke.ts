@@ -17,6 +17,7 @@ import { DEFAULT_LIMITS, RiskManager } from "../safety/risk-manager.js";
 import { SkillRouter, type Skill } from "../skills/router.js";
 import { CoralEngine, heuristicDecide, type MarketDataSource } from "../agent/engine.js";
 import { evolve } from "../agent/evolution.js";
+import { selectWatchlist } from "../agent/watchlist.js";
 import { resolveConfig } from "../config.js";
 import type { Observation } from "../memory/types.js";
 
@@ -376,6 +377,41 @@ test("bookkeeping tags never become scored zones", () => {
   mem.close();
 });
 
+// ── watchlist self-selection (Phase 5) ─────────────────────────────────────
+test("a young reef keeps its seed watchlist and says why", () => {
+  const mem = new CoralMemory(join(home, "watch-young.db"));
+  const p = mem.grow({ kind: "decision", agent: "coral", symbol: "AAPL", thesis: "single sample", action: "buy", confidence: 0.6, tags: ["momentum"] });
+  mem.resolve(p.id, "loss", -2);
+  const sel = selectWatchlist(mem, { seed: ["MSFT", "NVDA"] });
+  assert.equal(sel.basis, "seed", "one sample must not direct attention");
+  assert.deepEqual(sel.symbols, ["MSFT", "NVDA"]);
+  mem.close();
+});
+
+test("unsettled polyps hold their symbol on the watchlist", () => {
+  const mem = new CoralMemory(join(home, "watch-pending.db"));
+  mem.grow({ kind: "decision", agent: "coral", symbol: "TSLA", thesis: "open question", action: "buy", confidence: 0.6, tags: ["momentum"] });
+  const sel = selectWatchlist(mem, { seed: ["MSFT"] });
+  assert.deepEqual(sel.symbols, ["TSLA", "MSFT"], "a pending polyp must keep its symbol watchable or it can never settle");
+  mem.close();
+});
+
+test("a mature reef promotes symbols from strong zones and drops the losers", () => {
+  const mem = new CoralMemory(join(home, "watch-mature.db"));
+  for (let i = 0; i < 4; i++) {
+    const p = mem.grow({ kind: "decision", agent: "coral", symbol: "GOOD", thesis: `strong ${i}`, action: "buy", confidence: 0.7, tags: ["alpha-zone"] });
+    mem.resolve(p.id, "win", 5);
+  }
+  for (let i = 0; i < 4; i++) {
+    const p = mem.grow({ kind: "decision", agent: "coral", symbol: "BAD", thesis: `weak ${i}`, action: "buy", confidence: 0.7, tags: ["beta-zone"] });
+    mem.resolve(p.id, "loss", -5);
+  }
+  const sel = selectWatchlist(mem, { seed: ["SPY"], max: 2 });
+  assert.equal(sel.basis, "reef");
+  assert.deepEqual(sel.symbols, ["GOOD", "SPY"], "a zone that only lost must never direct attention — the seed fills the seat");
+  mem.close();
+});
+
 // ── report ────────────────────────────────────────────────────────────────
 await Promise.all(pending);
 
@@ -386,7 +422,7 @@ for (const r of results) {
 console.log(`\n${results.length - failed.length}/${results.length} passed`);
 
 // SQLite keeps the WAL mapping open on Windows; flush before unlinking.
-for (const db of ["reef.db", "young.db", "evo.db", "engine.db", "cap.db", "hold.db", "zones.db"]) {
+for (const db of ["reef.db", "young.db", "evo.db", "engine.db", "cap.db", "hold.db", "zones.db", "watch-young.db", "watch-pending.db", "watch-mature.db"]) {
   try {
     const { default: Database } = await import("better-sqlite3");
     const d = new Database(join(home, db));

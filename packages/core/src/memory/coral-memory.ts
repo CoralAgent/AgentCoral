@@ -430,6 +430,15 @@ export class CoralMemory {
     return [...acc.values()].sort((a, b) => b.polyps - a.polyps);
   }
 
+  /** Rows the watchlist selector reads — every decided or pending polyp that names a symbol. */
+  watchCandidates(): { symbol: string; outcome: string; tags: string; pnl: number }[] {
+    return this.db
+      .prepare<[], { symbol: string; outcome: string; tags: string; pnl: number }>(
+        "SELECT symbol, outcome, tags, pnl FROM polyps WHERE kind IN ('decision','trade') AND symbol IS NOT NULL",
+      )
+      .all();
+  }
+
   snapshot(): ReefSnapshot {
     const counts = this.db
       .prepare<[], { kind: string; outcome: string; n: number; pnl: number }>(

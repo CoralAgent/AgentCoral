@@ -17,7 +17,7 @@ import { createServer, type Server } from "node:http";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { evolve } from "@coral/core";
+import { evolve, selectWatchlist, type WatchlistSelection } from "@coral/core";
 import { boot, type Runtime } from "./runtime.js";
 import { publishSnapshot } from "./publish.js";
 import { backfillEmbeddings, geminiEmbedder } from "./embeddings.js";
@@ -25,8 +25,12 @@ import { backfillEmbeddings, geminiEmbedder } from "./embeddings.js";
 export interface DaemonConfig {
   /** minutes between passes */
   intervalMinutes: number;
-  /** watchlist — equity tickers or 0x addresses when venue is oak */
+  /** seed watchlist — the reef promotes from settled evidence (Phase 5) */
   symbols: string[];
+  /** hard cap on names the reef may watch per pass */
+  maxWatch: number;
+  /** Phase 5: the reef re-derives its watchlist from its own zone edges */
+  selfSelect: boolean;
   /** "equity" (Robinhood data) or "oak" (on-chain quotes via Chainbridge) */
   venue: "equity" | "oak";
   /** place gated PAPER orders on each pass (scan-only when false) */
@@ -46,6 +50,8 @@ export interface DaemonConfig {
 const DEFAULT_CONFIG: DaemonConfig = {
   intervalMinutes: 60,
   symbols: ["AAPL", "MSFT", "NVDA"],
+  maxWatch: 6,
+  selfSelect: true,
   venue: "equity",
   trade: false,
   budget: 250,
@@ -66,6 +72,8 @@ export interface DaemonStatus {
   lastError: string | null;
   lastPass: {
     runId: string;
+    watchlist: string[];
+    watchlistBasis: "seed" | "reef";
     decisions: { symbol: string; action: string; confidence: number }[];
     filled: number;
     rejected: number;
@@ -146,14 +154,20 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
 
   const runPass = async (): Promise<void> => {
     const source = config.venue === "oak" ? rt.tokenSource : rt.source;
+    // Phase 5: the reef picks what it watches from its own settled zone edges.
+    const selection: WatchlistSelection = config.selfSelect
+      ? selectWatchlist(rt.memory, { seed: config.symbols, max: config.maxWatch })
+      : { symbols: config.symbols, basis: "seed", reasons: {} };
+    if (config.selfSelect) log(`  watchlist (${selection.basis}) → ${selection.symbols.join(", ")}`);
+
     const report = config.trade
       ? await rt.engine.run({
-          symbols: config.symbols,
+          symbols: selection.symbols,
           source,
           budgetUsd: config.budget,
           maxOrders: config.maxOrders,
         })
-      : await rt.engine.scan(config.symbols, source);
+      : await rt.engine.scan(selection.symbols, source);
 
     const embedded = await backfillEmbeddings(rt.memory, geminiEmbedder);
     if (embedded > 0) log(`  embedded ${embedded} theses — semantic recall deepened`);
@@ -162,6 +176,8 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
     status.lastPassAt = new Date().toISOString();
     status.lastPass = {
       runId: report.runId,
+      watchlist: selection.symbols,
+      watchlistBasis: selection.basis,
       decisions: report.decisions.map((d) => ({
         symbol: d.symbol,
         action: d.action,
@@ -191,7 +207,7 @@ export async function runDaemon(opts: DaemonOpts = {}): Promise<void> {
     }
   };
 
-  if (created) log(`  config written → ${configPath} (edit the watchlist, then restart)`);
+  if (created) log(`  config written → ${configPath} (symbols are now a seed — the reef picks the rest from its own edges)`);
 
   // A failed pass is weather, not a reason to die. Invariant 2.
   const attemptPass = async (): Promise<void> => {

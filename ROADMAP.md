@@ -102,8 +102,11 @@ a fact anyone can watch happen.
 
 The reef tends itself:
 
-- Watchlist self-selection — the reef chooses what to watch from its own
-  zone edges, not from a config file.
+- Watchlist self-selection — shipped: every daemon pass re-derives the
+  watchlist from the reef's own settled zone edges. Symbols whose polyps
+  live in mature, above-neutral zones earn attention; unsettled polyps hold
+  their symbol until the market grades it; the old config list survives
+  only as a seed. A young reef refuses to choose and keeps its seed.
 - Cadence that adapts — pass frequency responds to what the market is doing,
   not to a schedule.
 - The hard lines stay hard: paper by default, the gate in code, everything on
