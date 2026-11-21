@@ -122,20 +122,30 @@ export async function yahooDaily(symbol: string, range: string): Promise<Bar[]> 
   if (!res.ok) throw new Error(`yahoo returned HTTP ${res.status} for ${symbol}`);
   const json = (await res.json()) as {
     chart?: {
-      result?: { timestamp?: number[]; indicators?: { quote?: { close?: (number | null)[] }[] } }[];
+      result?: {
+        timestamp?: number[];
+        indicators?: { quote?: { close?: (number | null)[]; volume?: (number | null)[] }[] };
+      }[];
       error?: { description?: string };
     };
   };
   if (json.chart?.error) throw new Error(`yahoo: ${json.chart.error.description ?? "unknown error"}`);
   const result = json.chart?.result?.[0];
   const ts = result?.timestamp ?? [];
-  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const quote = result?.indicators?.quote?.[0] ?? {};
+  const closes = quote.close ?? [];
+  const volumes = quote.volume ?? [];
   const bars: Bar[] = [];
   for (let i = 0; i < ts.length; i++) {
     const close = closes[i];
     const t = ts[i];
     if (typeof close === "number" && Number.isFinite(close) && close > 0 && typeof t === "number") {
-      bars.push({ t: new Date(t * 1000).toISOString(), close });
+      const volume = volumes[i];
+      bars.push({
+        t: new Date(t * 1000).toISOString(),
+        close,
+        volume: typeof volume === "number" && Number.isFinite(volume) ? volume : undefined,
+      });
     }
   }
   return bars;
@@ -159,7 +169,10 @@ export class YahooSource implements MarketDataSource {
         const bars = await yahooDaily(symbol, this.range);
         if (bars.length < 30) throw new Error(`only ${bars.length} bars`);
         out.push(observationFromBars(symbol, bars, "yahoo"));
-      } catch {
+      } catch (e) {
+        // Degrade loudly: the reef continues on synthetic for this symbol, but
+        // the operator must know the feed is down.
+        console.warn(`[yahoo] ${symbol}: ${e instanceof Error ? e.message : e} — degrading to labelled synthetic`);
         const degraded = await this.fallback.observe([symbol]);
         out.push(...degraded);
       }
@@ -171,7 +184,8 @@ export class YahooSource implements MarketDataSource {
     try {
       const bars = await yahooDaily(symbol, "5d");
       return bars[bars.length - 1]?.close ?? null;
-    } catch {
+    } catch (e) {
+      console.warn(`[yahoo] quote ${symbol}: ${e instanceof Error ? e.message : e} — degrading to synthetic`);
       return this.fallback.quote(symbol);
     }
   }
