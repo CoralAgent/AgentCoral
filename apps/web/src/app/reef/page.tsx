@@ -11,8 +11,6 @@ export const metadata: Metadata = {
   description: "A read-only window onto the reef on this machine: polyps, ledger, generations, zones.",
 };
 
-export const dynamic = "force-dynamic";
-
 const OUTCOME_TONE: Record<string, string> = {
   win: "text-cobalt",
   loss: "text-[#B3261E]",
