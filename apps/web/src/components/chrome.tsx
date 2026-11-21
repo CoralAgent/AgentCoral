@@ -6,6 +6,7 @@ import { SignIn } from "./sign-in";
 const LINKS = [
   { href: "/how-it-works", label: "How It Works" },
   { href: "/reef", label: "The Reef" },
+  { href: "/evidence", label: "Evidence" },
   { href: "/dapp", label: "dApp" },
   { href: "/safety", label: "Safety" },
   { href: "/install", label: "Installation" },
@@ -45,6 +46,7 @@ export function Header() {
 const FOOTER_LINKS = [
   { href: "/how-it-works", label: "How It Works" },
   { href: "/reef", label: "The Reef" },
+  { href: "/evidence", label: "Evidence" },
   { href: "https://github.com/CoralAgent", label: "GitHub" },
   { href: "/safety", label: "Safety" },
   { href: "/install", label: "Installation" },
