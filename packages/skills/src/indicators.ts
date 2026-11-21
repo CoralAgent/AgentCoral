@@ -81,7 +81,9 @@ export function observationFromBars(
     symbol: symbol.toUpperCase(),
     price: last,
     change24h: prev === 0 ? 0 : last / prev - 1,
-    volume: bars.reduce((sum, b) => sum + (b.volume ?? 0), 0),
+    // Volume of the most recent bar — the observation is a snapshot of "now",
+    // not a sum over the whole window.
+    volume: bars[bars.length - 1]?.volume ?? 0,
     rsi14: rsi(closes, 14),
     sma20: sma(closes, 20),
     momentum20: momentum(closes, 20),
