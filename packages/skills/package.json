@@ -10,7 +10,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "tsx src/test/broker-series.ts"
   },
   "dependencies": {
     "@coral/core": "workspace:*",

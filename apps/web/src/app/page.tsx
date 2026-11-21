@@ -320,14 +320,14 @@ $ coral backtest AAPL --range 6mo
               <li>· <code className="font-mono-code text-[11px]">coral api</code> — loopback HTTP surface + the /dapp page</li>
               <li>· <code className="font-mono-code text-[11px]">coral backtest</code> — real bars through the real loop, honest refusal without history</li>
               <li>· <Link href="/evidence" className="text-cobalt underline underline-offset-4 hover:text-ink">the evidence page</Link> — hit rate, edge per zone, drawdown, computed from the reef</li>
+              <li>· broker-priced bars — Robinhood MCP historicals cached to the reef, replayed through <code className="font-mono-code text-[11px]">coral backtest --broker</code>, hourly bars for tape-level replay</li>
               <li>· docker-compose for the whole local stack</li>
             </ul>
           </div>
           <div className="bg-white px-6 py-7">
             <p className="font-mono-code text-[9.5px] uppercase tracking-[0.12em] text-ink-soft">next, honestly scoped</p>
             <ul className="mt-4 space-y-2.5 font-sans-clean text-[12px] font-medium leading-[1.4] text-ink-muted">
-              <li>· broker-priced bars — the Robinhood MCP path is wired, waiting on the operator's token</li>
-              <li>· deeper replay — tape-level order-flow backtests, not just daily bars</li>
+              <li>· deeper replay — sub-hourly tape reconstruction, not just hourly bars</li>
               <li>· published packages — coral on npm once the API settles</li>
             </ul>
           </div>

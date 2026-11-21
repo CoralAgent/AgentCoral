@@ -14,8 +14,8 @@ import { formatDistanceToNow } from "date-fns";
 
 import { evolve, loadEnv, type CoralEvent } from "@coral/core";
 import { backfillEmbeddings, geminiEmbedder } from "./embeddings.js";
-import { createSigner, isAddress, onchainSwap, signerBalances, toBaseUnits } from "@coral/skills";
-import type { Address } from "@coral/skills";
+import { createSigner, isAddress, onchainSwap, RobinhoodMcpSource, signerBalances, toBaseUnits } from "@coral/skills";
+import type { Address, Bar } from "@coral/skills";
 import { HOSTS, ROBINHOOD, applyToHost, detect, resolveHost } from "@coral/mcp-connectors";
 import { serveCoral } from "@coral/mcp-connectors/server";
 
@@ -957,18 +957,24 @@ program
   .description("replay real historical bars through the real decide→gate→fill loop")
   .argument("<symbol>", "equity symbol, or token symbol/address with --oak")
   .option("--oak", "backtest a token against the recorded token-series instead of Yahoo daily bars")
+  .option("--broker", "backtest broker-priced bars from the Robinhood MCP (cached in broker-series.json)")
+  .option("--intraday", "with --broker: hourly bars for a tape-level replay instead of daily closes")
   .option("--range <range>", "yahoo range: 1mo 3mo 6mo 1y 2y 5y ytd max", "6mo")
   .option("--budget <usd>", "starting equity", "250")
   .option("--warmup <bars>", "bars before the first decision", "30")
   .option("--json", "machine-readable output")
-  .action(async (symbol: string, opts: { oak?: boolean; range: string; budget: string; warmup: string; json?: boolean }) => {
+  .action(async (
+    symbol: string,
+    opts: { oak?: boolean; broker?: boolean; intraday?: boolean; range: string; budget: string; warmup: string; json?: boolean },
+  ) => {
     const rt = boot();
     const { backtest, fetchYahooDaily, readRecordedSeries } = await import("./backtest.js");
     const budget = Number(opts.budget);
     const warmup = Number(opts.warmup);
 
-    let bars;
+    let bars: Bar[];
     let source: "robinhood-mcp" | "chainbridge";
+    let interval: "day" | "hour" = "day";
     if (opts.oak) {
       bars = readRecordedSeries(rt.config.home, symbol);
       source = "chainbridge";
@@ -980,6 +986,39 @@ program
         rt.close();
         process.exit(1);
       }
+    } else if (opts.broker) {
+      if (!rt.config.robinhood.mcpToken) {
+        fail(
+          "no ROBINHOOD_MCP_TOKEN configured — broker-priced bars need the hosted Robinhood MCP. " +
+            "Set the token, or use Yahoo daily bars (default) and --oak for recorded token series.",
+        );
+        rt.close();
+        process.exit(1);
+      }
+      interval = opts.intraday ? "hour" : "day";
+      const span = interval === "hour" ? "month" : "year";
+      source = "robinhood-mcp";
+      try {
+        const brokerSource = new RobinhoodMcpSource({
+          mcpUrl: rt.config.robinhood.mcpUrl,
+          mcpToken: rt.config.robinhood.mcpToken,
+          home: rt.config.home,
+        });
+        bars = await brokerSource.historicals(symbol.toUpperCase(), interval, span);
+      } catch (err) {
+        fail(`broker historicals unavailable: ${(err as Error).message}`);
+        rt.close();
+        process.exit(1);
+      }
+      if (bars.length < warmup + 1) {
+        fail(
+          `broker returned ${bars.length} ${interval} bar(s) for ${symbol.toUpperCase()} — below the ${warmup + 1}-bar minimum. ` +
+            `No fabricated history is substituted.`,
+        );
+        rt.close();
+        process.exit(1);
+      }
+      console.error(`  broker-priced bars: ${bars.length} ${interval} bars cached to broker-series.json`);
     } else {
       source = "robinhood-mcp";
       try {
@@ -996,7 +1035,7 @@ program
       }
     }
 
-    const result = backtest({ symbol, bars, source, budget, warmup });
+    const result = backtest({ symbol, bars, source, budget, warmup, interval });
     if (opts.json) {
       console.log(JSON.stringify(result, null, 2));
       rt.close();

@@ -33,6 +33,8 @@ export interface BacktestOptions {
   /** USD the replay starts with. */
   budget: number;
   warmup?: number;
+  /** Bar granularity, recorded in the result notes ("day" default, "hour" for tape-level replay). */
+  interval?: "day" | "hour";
 }
 
 export interface BacktestResult {
@@ -240,6 +242,9 @@ export function backtest(o: BacktestOptions): BacktestResult {
   }
   notes.push(`heuristic reasoner (the same one the engine uses without a model key)`);
   notes.push(`fee model: ${(risk.limits.feeRate * 100).toFixed(2)}% per side, same as paper fills`);
+  if (o.interval === "hour") {
+    notes.push(`tape-level replay: ${o.bars.length} broker-priced hourly bars, not daily OHLCV`);
+  }
 
   return {
     symbol,

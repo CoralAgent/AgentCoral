@@ -166,7 +166,7 @@ export class RobinhoodMcp {
   }
 }
 
-/** Accepts {data:[...]}, {bars:[...]}, {results:[{symbol, bars:[...]}]}, or [...]. */
+/** Accepts {data:[...]}, {bars:[...]}, {results:[{symbol, bars:[...]}]}, [...], or [{data:[...]}] wrappers. */
 export function normaliseBars(raw: unknown): Bar[] {
   const pick = (v: unknown): unknown[] => {
     if (Array.isArray(v)) return v;
@@ -183,17 +183,24 @@ export function normaliseBars(raw: unknown): Bar[] {
     return [];
   };
 
-  return pick(raw)
-    .map((item): Bar | null => {
-      if (!item || typeof item !== "object") return null;
-      const o = item as Record<string, unknown>;
-      const close = Number(o.close ?? o.c ?? o.Close ?? o.price);
-      const t = String(o.t ?? o.begin_at ?? o.timestamp ?? o.time ?? o.date ?? "");
-      if (!Number.isFinite(close) || close <= 0) return null;
-      const volume = Number(o.volume ?? o.v ?? 0);
-      return { t: t || new Date().toISOString(), close, volume: Number.isFinite(volume) ? volume : 0 };
-    })
-    .filter((b): b is Bar => b !== null);
+  const isBar = (o: Record<string, unknown>): boolean =>
+    "close" in o || "c" in o || "Close" in o || "close_price" in o || "price" in o;
+
+  return (
+    pick(raw)
+      // Unwrap wrapper items ({symbol, data:[bars]}) that carry no bar of their own.
+      .flatMap((item) => (item && typeof item === "object" && !isBar(item as Record<string, unknown>) ? pick(item) : [item]))
+      .map((item): Bar | null => {
+        if (!item || typeof item !== "object") return null;
+        const o = item as Record<string, unknown>;
+        const close = Number(o.close ?? o.c ?? o.Close ?? o.close_price ?? o.price);
+        const t = String(o.t ?? o.begin_at ?? o.timestamp ?? o.time ?? o.date ?? "");
+        if (!Number.isFinite(close) || close <= 0) return null;
+        const volume = Number(o.volume ?? o.v ?? 0);
+        return { t: t || new Date().toISOString(), close, volume: Number.isFinite(volume) ? volume : 0 };
+      })
+      .filter((b): b is Bar => b !== null)
+  );
 }
 
 export function quotePrice(raw: unknown, symbol: string): number | null {

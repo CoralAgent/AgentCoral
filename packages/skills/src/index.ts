@@ -11,6 +11,7 @@ export { RobinhoodChain, decodeString, formatUnits } from "./robinhood-chain.js"
 export type { ChainInfo } from "./robinhood-chain.js";
 
 export { RobinhoodMcpSource, SyntheticSource, YahooSource, createSource, yahooDaily } from "./market-data.js";
+export { readBrokerSeries, writeBrokerSeries, mergeBars, brokerSeriesPath } from "./broker-series.js";
 export type { SourceOptions } from "./market-data.js";
 export type { MarketDataSource } from "@coral/core";
 

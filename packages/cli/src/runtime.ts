@@ -38,7 +38,7 @@ export function boot(overrides: Partial<CoralConfig> = {}): Runtime {
 
   const risk = new RiskManager(RiskManager.forMode(config.mode));
   const engine = new CoralEngine({ config, memory, router, risk, embedder: geminiEmbedder });
-  const source = createSource({ mcpUrl: config.robinhood.mcpUrl, mcpToken: config.robinhood.mcpToken });
+  const source = createSource({ mcpUrl: config.robinhood.mcpUrl, mcpToken: config.robinhood.mcpToken, home: config.home });
   const tokenSource = new OakTokenSource({ oak: () => oak, home: config.home });
 
   return {

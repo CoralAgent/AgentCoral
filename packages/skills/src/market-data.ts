@@ -7,12 +7,15 @@
  * artifacts — a decision made on synthetic data is never mistaken for real.
  */
 import type { MarketDataSource, Observation } from "@coral/core";
+import { readBrokerSeries, mergeBars, writeBrokerSeries } from "./broker-series.js";
 import { observationFromBars, type Bar } from "./indicators.js";
 import { quotePrice, RobinhoodMcp } from "./robinhood-mcp.js";
 
 export interface SourceOptions {
   mcpUrl: string;
   mcpToken: string | null;
+  /** Reef home dir — when set, fetched historicals are cached to broker-series.json. */
+  home?: string;
 }
 
 /** Hosted Robinhood MCP. Errors are surfaced, never silently replaced. */
@@ -22,18 +25,37 @@ export class RobinhoodMcpSource implements MarketDataSource {
 
   constructor(opts: SourceOptions) {
     this.client = new RobinhoodMcp({ url: opts.mcpUrl, token: opts.mcpToken });
+    this.home = opts.home ?? null;
   }
+
+  private readonly home: string | null;
 
   get mcp(): RobinhoodMcp {
     return this.client;
+  }
+
+  /**
+   * Fetch historicals at a given granularity and merge them into the
+   * broker-series cache. Bars the broker returns are the reef's own record:
+   * broker-priced, timestamped, revisable, never silently dropped.
+   */
+  async historicals(symbol: string, interval: "day" | "hour", span: string): Promise<Bar[]> {
+    await this.client.connect();
+    const bars = await this.client.bars(symbol, interval, span);
+    if (bars.length === 0) throw new Error(`Robinhood MCP returned no ${interval} bars for ${symbol}`);
+    if (this.home) {
+      const merged = mergeBars(readBrokerSeries(this.home, symbol), bars);
+      writeBrokerSeries(this.home, symbol, merged);
+      return merged;
+    }
+    return bars;
   }
 
   async observe(symbols: string[]): Promise<Observation[]> {
     await this.client.connect();
     const out: Observation[] = [];
     for (const symbol of symbols) {
-      const bars = await this.client.bars(symbol);
-      if (bars.length === 0) throw new Error(`Robinhood MCP returned no bars for ${symbol}`);
+      const bars = await this.historicals(symbol, "day", "month");
       out.push(observationFromBars(symbol, bars, "robinhood-mcp"));
     }
     return out;
@@ -195,3 +217,6 @@ export class YahooSource implements MarketDataSource {
 export function createSource(opts: SourceOptions): MarketDataSource {
   return opts.mcpToken ? new RobinhoodMcpSource(opts) : new YahooSource();
 }
+
+export { readBrokerSeries, writeBrokerSeries, mergeBars, brokerSeriesPath } from "./broker-series.js";
+export type { BrokerSeriesOptions } from "./broker-series.js";
