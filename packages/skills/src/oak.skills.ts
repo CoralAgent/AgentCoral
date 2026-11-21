@@ -21,7 +21,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.find-token",
     description: "Resolve a Robinhood Chain token by name, symbol or address — verified tokens and lookalike warnings.",
     triggers: ["find token", "token address", "contract address", "which token", "token discovery"],
-    tags: ["oak", "chain", "market-data"],
+    tags: ["chainbridge", "chain", "market-data"],
     available: () => client().connected,
     run: async (ctx) => {
       const mcp = client();
@@ -34,7 +34,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.price",
     description: "USD price of an on-chain token on Robinhood Chain (fresh pool quote; stale pools are refused).",
     triggers: ["token price", "onchain price", "how much is", "price of", "token quote"],
-    tags: ["oak", "chain", "market-data"],
+    tags: ["chainbridge", "chain", "market-data"],
     available: () => client().connected,
     run: async (ctx) => {
       const token = String(ctx.token ?? ctx.symbol ?? "");
@@ -52,7 +52,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.balances",
     description: "Token balances of the local Chainbridge wallet on Robinhood Chain.",
     triggers: ["wallet balances", "onchain balances", "my tokens", "wallet holdings"],
-    tags: ["oak", "chain", "portfolio"],
+    tags: ["chainbridge", "chain", "portfolio"],
     available: () => client().connected,
     run: async () => {
       const mcp = client();
@@ -65,7 +65,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.positions",
     description: "Aggregated DeFi positions of the Chainbridge wallet across Robinhood Chain projects.",
     triggers: ["defi positions", "onchain positions", "open positions", "vaults", "lending positions"],
-    tags: ["oak", "chain", "portfolio"],
+    tags: ["chainbridge", "chain", "portfolio"],
     available: () => client().connected,
     run: async (ctx) => {
       const mcp = client();
@@ -78,7 +78,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.quote",
     description: "Best-route DEX quote for a token swap on Robinhood Chain (KyberSwap/Velora/Pons/pinned Uniswap).",
     triggers: ["swap quote", "dex quote", "best route", "how much would i get", "exchange rate"],
-    tags: ["oak", "chain", "execution", "market-data"],
+    tags: ["chainbridge", "chain", "execution", "market-data"],
     available: () => client().connected,
     run: async (ctx) => {
       const from = String(ctx.from ?? "");
@@ -101,7 +101,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.account",
     description: "Chainbridge wallet state: address, ERC-8004 identity, actions lock, spending cap, setup progress.",
     triggers: ["oak wallet", "oak status", "agent identity", "wallet setup", "spending limit"],
-    tags: ["oak", "chain", "diagnostics"],
+    tags: ["chainbridge", "chain", "diagnostics"],
     available: () => client().connected,
     run: async () => {
       const mcp = client();
@@ -115,7 +115,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     description:
       "Execute a token swap on Robinhood Chain via Chainbridge. Never call directly — the engine hands off only after the risk gate allows it, and only in live mode.",
     triggers: ["swap token", "execute swap", "trade token", "buy token", "sell token"],
-    tags: ["oak", "chain", "execution"],
+    tags: ["chainbridge", "chain", "execution"],
     available: () => client().connected,
     run: async (ctx) => {
       const mcp = client();
@@ -130,7 +130,7 @@ export function oakSkills(deps: OakSkillDeps): Skill[] {
     name: "oak.execute",
     description: "Sign and broadcast a prepared Chainbridge action by actionId. Engine-only — called after the gate says yes.",
     triggers: ["execute action", "sign transaction", "broadcast"],
-    tags: ["oak", "chain", "execution"],
+    tags: ["chainbridge", "chain", "execution"],
     available: () => client().connected,
     run: async (ctx) => {
       const mcp = client();

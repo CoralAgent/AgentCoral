@@ -98,7 +98,7 @@ export async function onchainSwap(o: OnchainSwapOpts): Promise<OnchainSwapResult
     action: "buy",
     confidence: o.confidence ?? 0.75,
     thesis: `manual on-chain swap ${o.amountHuman} ${fromInfo.symbol} → ${toInfo.symbol}`,
-    tags: ["onchain", "oak", "manual"],
+    tags: ["onchain", "chainbridge", "manual"],
     recalled: [],
   };
 
@@ -150,7 +150,7 @@ export async function onchainSwap(o: OnchainSwapOpts): Promise<OnchainSwapResult
       notional: verdict.notional,
       polypId: null,
       status: "filled",
-      venue: "oak",
+      venue: "chainbridge",
     };
     o.memory.record(entry);
     const polyp = o.memory.grow({
@@ -163,7 +163,7 @@ export async function onchainSwap(o: OnchainSwapOpts): Promise<OnchainSwapResult
       outcome: "pending",
       pnl: 0,
       tags: [...decision.tags, "paper"],
-      artifacts: { quote, fees, venue: "oak", from: fromInfo.symbol, amountIn: effectiveIn },
+      artifacts: { quote, fees, venue: "chainbridge", from: fromInfo.symbol, amountIn: effectiveIn },
     });
     notes.push(`paper fill: ${qty.toFixed(6)} ${toInfo.symbol} @ $${toUsd} (fees $${fees.toFixed(2)})`);
     return { stage: "filled", verdict, quote, entry, polypId: polyp.id, notes };
@@ -198,7 +198,7 @@ export async function onchainSwap(o: OnchainSwapOpts): Promise<OnchainSwapResult
     notional: verdict.notional,
     polypId: null,
     status: txHash ? "filled" : "pending",
-    venue: "oak",
+    venue: "chainbridge",
   };
   o.memory.record(entry);
   const polyp = o.memory.grow({
@@ -211,7 +211,7 @@ export async function onchainSwap(o: OnchainSwapOpts): Promise<OnchainSwapResult
     outcome: "pending",
     pnl: 0,
     tags: [...decision.tags, "live"],
-    artifacts: { quote, prepared, executed, venue: "oak", from: fromInfo.symbol, amountIn: effectiveIn, txHash },
+    artifacts: { quote, prepared, executed, venue: "chainbridge", from: fromInfo.symbol, amountIn: effectiveIn, txHash },
   });
   return { stage: "filled", verdict, quote, txHash, entry, polypId: polyp.id, notes };
 }
