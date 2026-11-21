@@ -29,7 +29,7 @@ const WARMUP = 30;
 export interface BacktestOptions {
   symbol: string;
   bars: Bar[];
-  source: "robinhood-mcp" | "chainbridge";
+  source: "robinhood-mcp" | "chainbridge" | "yahoo";
   /** USD the replay starts with. */
   budget: number;
   warmup?: number;

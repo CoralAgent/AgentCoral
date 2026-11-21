@@ -973,7 +973,7 @@ program
     const warmup = Number(opts.warmup);
 
     let bars: Bar[];
-    let source: "robinhood-mcp" | "chainbridge";
+    let source: "robinhood-mcp" | "chainbridge" | "yahoo";
     let interval: "day" | "hour" = "day";
     if (opts.oak) {
       bars = readRecordedSeries(rt.config.home, symbol);
@@ -1020,7 +1020,7 @@ program
       }
       console.error(`  broker-priced bars: ${bars.length} ${interval} bars cached to broker-series.json`);
     } else {
-      source = "robinhood-mcp";
+      source = "yahoo";
       try {
         bars = await fetchYahooDaily(symbol, opts.range);
       } catch (err) {
