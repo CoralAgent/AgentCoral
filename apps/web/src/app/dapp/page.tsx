@@ -11,8 +11,6 @@ export const metadata: Metadata = {
     "The interactive surface of this machine's reef — Chainbridge wallet, on-chain scans, gated quotes and swaps. Talks to coral api on 127.0.0.1 only.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default async function DappPage() {
   const reef = await readReef();
   return (
