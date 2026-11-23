@@ -108,6 +108,8 @@ export function readTokenSeries(): Record<string, { t: string; close: number }[]
   }
 }
 
+const ZONE_EXCLUDED = new Set(["sanctioned", "gated", "reflection", "settlement"]);
+
 export async function readReef(): Promise<ReefData> {
   const { home, source } = resolveCoralHome();
   const dbPath = join(home, "reef.db");
@@ -177,6 +179,7 @@ export async function readReef(): Promise<ReefData> {
         continue;
       }
       for (const tag of tags) {
+        if (ZONE_EXCLUDED.has(tag)) continue;
         const zone =
           zones.get(tag) ??
           ({ name: tag, polyps: 0, wins: 0, losses: 0, strength: 0, lastSeen: null } as ReefZone);
